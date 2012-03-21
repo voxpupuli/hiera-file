@@ -17,8 +17,9 @@ class Hiera
           next if ! File.exist?(path)
           data = File.read(path)
           next if ! data
+          answer = data
         end
-        return data
+        return answer
       end
     end
   end
