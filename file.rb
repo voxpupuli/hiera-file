@@ -12,11 +12,8 @@ class Hiera
 
         Backend.datasources(scope, order_override) do |source|
           Hiera.debug("Looking for data source #{source}")
-
           file = Backend.datafile(:file, scope, source, "txt") || next
-
           path = File.join([datadir(:file, scope), source, key)
-
           next if ! File.exist?(path)
           data = File.read(path)
           next if ! data
