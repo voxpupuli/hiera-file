@@ -23,6 +23,7 @@ class Hiera
           data = File.read(abs_path)
           next unless data
           answer = data
+          break
         end
         return answer
       end
