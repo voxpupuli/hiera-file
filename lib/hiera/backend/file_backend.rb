@@ -23,13 +23,21 @@ class Hiera
           unless abs_path.index(abs_datadir) == 0
             raise Exception, "Hiera File backend: key lookup outside of datadir '#{key}'"
           end
+
           next unless File.exist?(abs_path)
           data = File.read(abs_path)
-          next unless data
-          answer = data
-          break
+
+          case resolution_type
+          when :array
+            answer ||= []
+            answer << Backend.parse_answer(data, scope)
+          else
+            answer = Backend.parse_answer(data, scope)
+            break
+          end
         end
-        return answer
+
+        answer
       end
     end
   end
