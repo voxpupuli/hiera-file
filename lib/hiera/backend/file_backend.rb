@@ -12,12 +12,16 @@ class Hiera
 
         Backend.datasources(scope, order_override) do |source|
           Hiera.debug("Hiera File_backend: looking for data source '#{source}'")
-          datadir = Backend.datafile(:file, scope, source, "d")
-          next unless datadir
+
+          datadir = Backend.datafile(:file, scope, source, "d") or next
+
+          # Expand the datadir and path, and ensure that the datadir contains
+          # the given key. If the expanded key is outside of the datadir then
+          # this is a directory traversal attack and should be aborted.
           abs_datadir = File.expand_path(datadir)
-          abs_path = File.expand_path(File.join(abs_datadir, key))
+          abs_path    = File.expand_path(File.join(abs_datadir, key))
           unless abs_path.index(abs_datadir) == 0
-            raise Exception, "Hiera File_backend: key lookup outside of datadir '#{key}'"
+            raise Exception, "Hiera File backend: key lookup outside of datadir '#{key}'"
           end
           next unless File.exist?(abs_path)
           data = File.read(abs_path)
