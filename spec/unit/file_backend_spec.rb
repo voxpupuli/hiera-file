@@ -19,67 +19,66 @@ class Hiera
       end
 
       describe "#lookup" do
+        before :each do
+          Backend.stubs(:datasources).multiple_yields(["one"], ["two"])
+        end
+
         subject { File_backend.new }
 
         it "should look for data in all sources" do
-          Backend.expects(:datasources).multiple_yields(["one"], ["two"])
           Backend.expects(:datafile).with(:file, {}, "one", "d")
           Backend.expects(:datafile).with(:file, {}, "two", "d")
 
           subject.lookup("key", {}, nil, :priority)
         end
 
-        it "should pick data earliest source that has it for priority searches" do
-          Backend.expects(:datasources).multiple_yields(["one"], ["two"])
+        describe 'when searching' do
 
-          Backend.expects(:datafile).with(:file, {}, "one", "d").returns("/datadir/one.d")
-          Backend.expects(:datafile).with(:file, {}, "two", "d").never
+          before :each do
+            Backend.stubs(:datafile).with(:file, {}, "one", "d").returns("/datadir/one.d")
+            Backend.stubs(:datafile).with(:file, {}, "two", "d").returns("/datadir/two.d")
+          end
 
-          File.expects(:exist?).with("/datadir/one.d/key").returns true
-          File.expects(:read).with("/datadir/one.d/key").returns 'value'
+          it "should pick data earliest source that has it for priority searches" do
+            File.expects(:exist?).with("/datadir/one.d/key").returns true
+            File.expects(:read).with("/datadir/one.d/key").returns 'value'
 
-          subject.lookup("key", {}, nil, :priority).should == 'value'
-        end
+            File.expects(:exist?).with("/datadir/two.d/key").never
+            File.expects(:read).with("/datadir/two.d/key").never
 
-        it "should build an array of all data sources for array searches" do
-          Backend.expects(:datasources).multiple_yields(["one"], ["two"])
+            subject.lookup("key", {}, nil, :priority).should == 'value'
+          end
 
-          Backend.expects(:datafile).with(:file, {}, "one", "d").returns("/datadir/one.d")
-          Backend.expects(:datafile).with(:file, {}, "two", "d").returns("/datadir/two.d")
+          it "should build an array of all data sources for array searches" do
+            File.expects(:exist?).with("/datadir/one.d/key").returns true
+            File.expects(:read).with("/datadir/one.d/key").returns 'value one'
 
-          File.expects(:exist?).with("/datadir/one.d/key").returns true
-          File.expects(:read).with("/datadir/one.d/key").returns 'value one'
+            File.expects(:exist?).with("/datadir/two.d/key").returns true
+            File.expects(:read).with("/datadir/two.d/key").returns 'value two'
 
-          File.expects(:exist?).with("/datadir/two.d/key").returns true
-          File.expects(:read).with("/datadir/two.d/key").returns 'value two'
+            subject.lookup("key", {}, nil, :array).should == ['value one', 'value two']
+          end
 
-          subject.lookup("key", {}, nil, :array).should == ['value one', 'value two']
-        end
+          it "should parse the answer for scope variables" do
+            scope = {'scope_val' => 'v'}
 
-        it "should parse the answer for scope variables" do
-          scope = {'scope_val' => 'v'}
-          Backend.expects(:datasources).multiple_yields(["one"], ["two"])
+            Backend.expects(:datafile).with(:file, scope, "one", "d").returns("/datadir/one.d")
+            Backend.expects(:datafile).with(:file, scope, "two", "d").never
 
-          Backend.expects(:datafile).with(:file, scope, "one", "d").returns("/datadir/one.d")
-          Backend.expects(:datafile).with(:file, scope, "two", "d").never
+            File.expects(:exist?).with("/datadir/one.d/key").returns true
+            File.expects(:read).with("/datadir/one.d/key").returns '%{scope_val}alue'
 
-          File.expects(:exist?).with("/datadir/one.d/key").returns true
-          File.expects(:read).with("/datadir/one.d/key").returns '%{scope_val}alue'
+            subject.lookup("key", scope, nil, :priority).should == 'value'
+          end
 
-          subject.lookup("key", scope, nil, :priority).should == 'value'
-        end
+          it "should prevent directory traversal attacks" do
+            File.expects(:exist?).never
+            File.expects(:read).never
 
-        it "should prevent directory traversal attacks" do
-          Backend.expects(:datasources).multiple_yields(["one"], ["two"])
-          Backend.expects(:datafile).with(:file, {}, "one", "d").returns("/datadir/one.d")
-          Backend.expects(:datafile).with(:file, {}, "two", "d").never
-
-          File.expects(:exist?).never
-          File.expects(:read).never
-
-          expect do
-            subject.lookup("../../../../../etc/passwd", {}, nil, :priority)
-          end.to raise_error
+            expect do
+              subject.lookup("../../../../../etc/passwd", {}, nil, :priority)
+            end.to raise_error
+          end
         end
       end
     end
