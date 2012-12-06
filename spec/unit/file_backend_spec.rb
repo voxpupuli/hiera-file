@@ -68,6 +68,19 @@ class Hiera
 
           subject.lookup("key", scope, nil, :priority).should == 'value'
         end
+
+        it "should prevent directory traversal attacks" do
+          Backend.expects(:datasources).multiple_yields(["one"], ["two"])
+          Backend.expects(:datafile).with(:file, {}, "one", "d").returns("/datadir/one.d")
+          Backend.expects(:datafile).with(:file, {}, "two", "d").never
+
+          File.expects(:exist?).never
+          File.expects(:read).never
+
+          expect do
+            subject.lookup("../../../../../etc/passwd", {}, nil, :priority)
+          end.to raise_error
+        end
       end
     end
   end
