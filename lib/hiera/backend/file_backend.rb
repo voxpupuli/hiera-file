@@ -2,13 +2,13 @@ class Hiera
   module Backend
     class File_backend
       def initialize
-        Hiera.debug("Hiera File_backend: starting")
+        Hiera.debug("Hiera File backend starting")
       end
 
       def lookup(key, scope, order_override, resolution_type)
         answer = nil
 
-        Hiera.debug("Hiera File_backend: looking up '#{key}'")
+        Hiera.debug("Looking up #{key} in JSON backend")
 
         Backend.datasources(scope, order_override) do |source|
           Hiera.debug("Hiera File_backend: looking for data source '#{source}'")
