@@ -8,7 +8,7 @@ class Hiera
       def lookup(key, scope, order_override, resolution_type)
         answer = nil
 
-        Hiera.debug("Looking up #{key} in JSON backend")
+        Hiera.debug("Looking up #{key} in File backend")
 
         Backend.datasources(scope, order_override) do |source|
           Hiera.debug("Hiera File_backend: looking for data source '#{source}'")
