@@ -55,6 +55,19 @@ parameter. e.g.
       content => hiera('giant_vampire_commandos'),
     }
 
+Interpolation
+-------------
+
+Since the file backend is built to deal with arbitrary chunks of data and
+interpolation might not be meaningful and can break things, it can be disabled.
+To disable it for the entire file backend, add the following to your hiera.yaml:
+
+    ---
+    # Your normal hiera.yaml
+    :file:
+      :interpolate: false # defaults to true
+
+
 Installation
 ------------
 
