@@ -1,8 +1,16 @@
+require 'hiera/config'
+
 class Hiera
   module Backend
     class File_backend
       def initialize
         Hiera.debug("Hiera File backend starting")
+
+        if Hiera::Config.include?(:file) and Hiera::Config[:file].has_key? :interpolate
+          @interpolate = Hiera::Config[:file][:interpolate]
+        else
+          @interpolate = true
+        end
       end
 
       def lookup(key, scope, order_override, resolution_type)
@@ -25,9 +33,9 @@ class Hiera
           case resolution_type
           when :array
             answer ||= []
-            answer << Backend.parse_answer(data, scope)
+            answer << parse_answer(data, scope)
           else
-            answer = Backend.parse_answer(data, scope)
+            answer = parse_answer(data, scope)
             break
           end
         end
@@ -51,6 +59,20 @@ class Hiera
         abs_path    = File.expand_path(File.join(abs_datadir, key))
         unless abs_path.index(abs_datadir) == 0
           raise Exception, "Hiera File backend: key lookup outside of datadir '#{key}'"
+        end
+      end
+
+      # Parse the answer according to the chosen interpolation mode
+      #
+      # @param data  [String] The value to parse
+      # @param scope [Hash] The variable scope to use for interpolation
+      #
+      # @return [String] The interpolated data
+      def parse_answer(data, scope)
+        if @interpolate
+          Backend.parse_answer(data, scope)
+        else
+          data
         end
       end
     end
