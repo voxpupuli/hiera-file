@@ -3,6 +3,8 @@ hiera-file
 
 A data backend for Hiera that can return the content of whole files.
 
+Travis Test status: [![Build Status](https://travis-ci.org/adrienthebo/hiera-file.png?branch=master)](https://travis-ci.org/adrienthebo/hiera-file)
+
 Configuration
 -------------
 
