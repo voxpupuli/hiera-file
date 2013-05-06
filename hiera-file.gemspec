@@ -5,7 +5,7 @@ require 'bundler/version'
 
 Gem::Specification.new do |s|
   s.name        = "hiera-file"
-  s.version     = '1.0.1'
+  s.version     = '1.1.0'
   s.platform    = Gem::Platform::RUBY
 
   s.authors     = ["Hunter Haugen", "Adrien Thebo", "Reid Vandewiele"]
