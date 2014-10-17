@@ -14,7 +14,9 @@ Gem::Specification.new do |s|
   s.summary     = "File backend for Hiera"
   s.description = "A data backend for Hiera that can return the content of whole files"
 
-  s.add_dependency 'hiera', '>= 1.0.0'
+  # hiera is omitted as an explicit dependency so that hiera-file can be
+  # installed as a gem when hiera is installed via system package.
+  #s.add_dependency 'hiera', '>= 1.0.0'
 
   s.add_development_dependency 'rspec', '~> 2.10.0'
   s.add_development_dependency 'mocha', '~> 0.10.5'
