@@ -40,20 +40,20 @@ class Hiera
 
           it "should pick data earliest source that has it for priority searches" do
             File.expects(:exist?).with("/datadir/one.d/key").returns true
-            File.expects(:read).with("/datadir/one.d/key").returns 'value'
+            IO.expects(:binread).with("/datadir/one.d/key").returns 'value'
 
             File.expects(:exist?).with("/datadir/two.d/key").never
-            File.expects(:read).with("/datadir/two.d/key").never
+            IO.expects(:binread).with("/datadir/two.d/key").never
 
             subject.lookup("key", {}, nil, :priority).should == 'value'
           end
 
           it "should build an array of all data sources for array searches" do
             File.expects(:exist?).with("/datadir/one.d/key").returns true
-            File.expects(:read).with("/datadir/one.d/key").returns 'value one'
+            IO.expects(:binread).with("/datadir/one.d/key").returns 'value one'
 
             File.expects(:exist?).with("/datadir/two.d/key").returns true
-            File.expects(:read).with("/datadir/two.d/key").returns 'value two'
+            IO.expects(:binread).with("/datadir/two.d/key").returns 'value two'
 
             subject.lookup("key", {}, nil, :array).should == ['value one', 'value two']
           end
@@ -75,7 +75,7 @@ class Hiera
                 Backend.expects(:datafile).with(:file, scope, "two", "d").never
 
                 File.expects(:exist?).with("/datadir/one.d/key").returns true
-                File.expects(:read).with("/datadir/one.d/key").returns '%{scope_val}alue'
+                IO.expects(:binread).with("/datadir/one.d/key").returns '%{scope_val}alue'
 
                 subject.lookup("key", scope, nil, :priority).should == 'value'
               end
@@ -89,7 +89,7 @@ class Hiera
                 Backend.expects(:datafile).with(:file, scope, "two", "d").never
 
                 File.expects(:exist?).with("/datadir/one.d/key").returns true
-                File.expects(:read).with("/datadir/one.d/key").returns '%{scope_val}alue'
+                IO.expects(:binread).with("/datadir/one.d/key").returns '%{scope_val}alue'
 
                 subject.lookup("key", scope, nil, :priority).should == 'value'
               end
@@ -107,7 +107,7 @@ class Hiera
                 Backend.expects(:datafile).with(:file, scope, "two", "d").never
 
                 File.expects(:exist?).with("/datadir/one.d/key").returns true
-                File.expects(:read).with("/datadir/one.d/key").returns '%{scope_val}alue'
+                IO.expects(:binread).with("/datadir/one.d/key").returns '%{scope_val}alue'
 
                 subject.lookup("key", scope, nil, :priority).should == '%{scope_val}alue'
               end
@@ -116,7 +116,7 @@ class Hiera
 
           it "should prevent directory traversal attacks" do
             File.expects(:exist?).never
-            File.expects(:read).never
+            IO.expects(:binread).never
 
             expect do
               subject.lookup("../../../../../etc/passwd", {}, nil, :priority)

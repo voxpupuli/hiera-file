@@ -28,7 +28,7 @@ class Hiera
           path = File.join(datadir, key)
           next unless File.exist?(path)
 
-          data = File.read(path)
+          data = IO.binread(path)
 
           case resolution_type
           when :array
