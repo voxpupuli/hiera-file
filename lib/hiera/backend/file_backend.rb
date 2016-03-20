@@ -13,8 +13,9 @@ class Hiera
         end
       end
 
-      def lookup(key, scope, order_override, resolution_type)
+      def lookup(key, scope, order_override, resolution_type, context)
         answer = nil
+        found = false
 
         Hiera.debug("Looking up #{key} in File backend")
 
@@ -29,19 +30,27 @@ class Hiera
           next unless File.exist?(path)
 
           data = File.read(path)
+          found = true
 
           case resolution_type
           when :array
             answer ||= []
-            answer << parse_answer(data, scope)
+            answer << parse_answer(data, scope, {}, context)
           else
-            answer = parse_answer(data, scope)
+            answer = parse_answer(data, scope, {}, context)
             break
           end
         end
 
-        answer
+        throw :no_such_key unless found
+        return answer
       end
+
+      # because hiera 3 interprets . as a segment delimeter we can override this behaviour with this method
+      def lookup_with_segments(segments, scope, order_override, resolution_type, context)
+        return lookup(segments.join('.'), scope, order_override, resolution_type, context)
+      end
+
 
       # Ensure that looked up files are within the datadir to prevent directory traversal
       #
@@ -68,9 +77,9 @@ class Hiera
       # @param scope [Hash] The variable scope to use for interpolation
       #
       # @return [String] The interpolated data
-      def parse_answer(data, scope)
+      def parse_answer(data, scope, extras, context)
         if @interpolate
-          Backend.parse_answer(data, scope)
+          Backend.parse_answer(data, scope, extras, context)
         else
           data
         end
