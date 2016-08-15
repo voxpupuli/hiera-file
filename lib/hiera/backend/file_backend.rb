@@ -13,42 +13,77 @@ class Hiera
         end
       end
 
-      def lookup(key, scope, order_override, resolution_type, context)
-        answer = nil
-        found = false
+      if Gem::Version.new(Hiera.version) < Gem::Version.new('2')
+        def lookup(key, scope, order_override, resolution_type)
+          answer = nil
 
-        Hiera.debug("Looking up #{key} in File backend")
+          Hiera.debug("Looking up #{key} in File backend")
 
-        Backend.datasources(scope, order_override) do |source|
-          Hiera.debug("Hiera File_backend: looking for data source '#{source}'")
+          Backend.datasources(scope, order_override) do |source|
+            Hiera.debug("Hiera File_backend: looking for data source '#{source}'")
 
-          datadir = Backend.datafile(:file, scope, source, "d") or next
+            datadir = Backend.datafile(:file, scope, source, "d") or next
 
-          validate_key_lookup!(datadir, key)
+            validate_key_lookup!(datadir, key)
 
-          path = File.join(datadir, key)
-          next unless File.exist?(path)
+            path = File.join(datadir, key)
+            next unless File.exist?(path)
 
-          data = File.read(path)
-          found = true
+            data = File.read(path)
 
-          case resolution_type
-          when :array
-            answer ||= []
-            answer << parse_answer(data, scope, {}, context)
-          else
-            answer = parse_answer(data, scope, {}, context)
-            break
+            case resolution_type
+            when :array
+              answer ||= []
+              answer << parse_answer(data, scope)
+            else
+              answer = parse_answer(data, scope)
+              break
+            end
           end
+
+          answer
+        end
+      else
+        def lookup(key, scope, order_override, resolution_type, context)
+          if Gem::Version.new(Hiera.version) >= Gem::Version.new('2') and Gem::Version.new(Hiera.version) < Gem::Version.new('3.1.0')
+	    Hiera.warn("Hiera File_backend: file extensions unsupported by Hiera version")
+          end
+          answer = nil
+          found = false
+
+          Hiera.debug("Looking up #{key} in File backend")
+
+          Backend.datasources(scope, order_override) do |source|
+            Hiera.debug("Hiera File_backend: looking for data source '#{source}'")
+
+            datadir = Backend.datafile(:file, scope, source, "d") or next
+
+            validate_key_lookup!(datadir, key)
+
+            path = File.join(datadir, key)
+            next unless File.exist?(path)
+
+            data = File.read(path)
+            found = true
+
+            case resolution_type
+            when :array
+              answer ||= []
+              answer << parse_answer(data, scope, {}, context)
+            else
+              answer = parse_answer(data, scope, {}, context)
+              break
+            end
+          end
+
+          throw :no_such_key unless found
+          return answer
         end
 
-        throw :no_such_key unless found
-        return answer
-      end
-
-      # because hiera 3 interprets . as a segment delimeter we can override this behaviour with this method
-      def lookup_with_segments(segments, scope, order_override, resolution_type, context)
-        return lookup(segments.join('.'), scope, order_override, resolution_type, context)
+        # because hiera 3 interprets . as a segment delimeter we can override this behaviour with this method
+        def lookup_with_segments(segments, scope, order_override, resolution_type, context)
+          return lookup(segments.join('.'), scope, order_override, resolution_type, context)
+        end
       end
 
 
@@ -77,11 +112,24 @@ class Hiera
       # @param scope [Hash] The variable scope to use for interpolation
       #
       # @return [String] The interpolated data
-      def parse_answer(data, scope, extras, context)
-        if @interpolate
-          Backend.parse_answer(data, scope, extras, context)
-        else
-          data
+      if Gem::Version.new(Hiera.version) < Gem::Version.new('2')
+        def parse_answer(data, scope)
+          if @interpolate
+            Backend.parse_answer(data, scope)
+          else
+            data
+          end
+        end
+      else
+        def parse_answer(data, scope, extras, context)
+          if Gem::Version.new(Hiera.version) >= Gem::Version.new('2') and Gem::Version.new(Hiera.version) < Gem::Version.new('3.1.0')
+  	    Hiera.debug("Hiera File_backend: file extensions unsupported by Hiera version")
+          end
+          if @interpolate
+            Backend.parse_answer(data, scope, extras, context)
+          else
+            data
+          end
         end
       end
     end
