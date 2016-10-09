@@ -29,11 +29,7 @@ class Hiera
             path = File.join(datadir, key)
             next unless File.exist?(path)
 
-<<<<<<< HEAD
-            data = File.read(path)
-=======
-          data = IO.binread(path)
->>>>>>> chris/master
+            data = IO.binread(path)
 
             case resolution_type
             when :array
