@@ -70,9 +70,9 @@ class Hiera
       # @return [String] The interpolated data
       def parse_answer(data, scope)
         if @interpolate
-          Backend.parse_answer(data, scope)
+          Backend.parse_answer(data, scope).chomp
         else
-          data
+          data.chomp
         end
       end
     end
