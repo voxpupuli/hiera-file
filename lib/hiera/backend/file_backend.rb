@@ -26,7 +26,13 @@ class Hiera
           validate_key_lookup!(datadir, key)
 
           path = File.join(datadir, key)
-          next unless File.exist?(path)
+          unless File.exist?(path)
+            keypath = key.sub('::','/')
+            validate_key_lookup!(datadir, keypath)
+            path = File.join(datadir, keypath)
+            Hiera.debug("#{path}")
+            next unless File.exist?(path)
+          end
 
           data = File.read(path)
 
