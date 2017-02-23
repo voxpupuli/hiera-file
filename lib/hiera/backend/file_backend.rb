@@ -33,6 +33,8 @@ class Hiera
             next unless File.exist?(path)
           end
 
+          next if File.directory?(path)
+
           data = File.read(path)
 
           case resolution_type
